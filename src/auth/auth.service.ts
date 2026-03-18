@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import * as bcrypt from 'bcrypt';
+import bcrypt from 'bcrypt';
 import { Profile } from 'passport-google-oauth20';
 import { UsersService } from '../users/users.service';
 import type { Tokens, JwtPayload } from 'types/auth';

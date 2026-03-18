@@ -12,12 +12,7 @@ import {
 } from './strategies';
 
 @Module({
-  imports: [
-    ConfigModule,
-    UsersModule,
-    PassportModule,
-    JwtModule.register({}),
-  ],
+  imports: [ConfigModule, UsersModule, PassportModule, JwtModule.register({})],
   controllers: [AuthController],
   providers: [
     AuthService,
