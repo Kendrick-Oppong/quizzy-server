@@ -13,6 +13,7 @@ import type { Tokens, JwtPayload } from 'types/auth';
 import type { AuthProvider, User } from 'generated/prisma/client';
 import type { RegisterDto } from './dto';
 import { AUTH_CONSTANTS } from '../lib/constants/auth';
+import type { Response } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -142,6 +143,26 @@ export class AuthService {
     }
 
     return user;
+  }
+
+  async handleOAuthCallback(
+    user: User,
+    res: Response,
+  ): Promise<{ url: string }> {
+    const tokens = await this.getTokens(user.id, user.email);
+    await this.updateRefreshTokenHash(user.id, tokens.refreshToken);
+
+    res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN, tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    const frontendUrl = this.config.get<string>('FRONTEND_URL')!;
+    return {
+      url: `${frontendUrl}/oauth-success?token=${tokens.accessToken}`,
+    };
   }
 
   // ── Token Management ──────────────────────────────────────

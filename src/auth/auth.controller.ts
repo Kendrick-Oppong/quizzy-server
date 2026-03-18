@@ -7,6 +7,7 @@ import {
   Post,
   Res,
   UseGuards,
+  Redirect,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -105,26 +106,22 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
+  @Redirect()
   @ApiOperation({
     summary: 'Google OAuth Callback',
-    description: 'Handles the callback from the Google OAuth flow. Automatically links accounts or creates a new one. Returns an access token and sets the refresh token cookie.',
+    description: 'Handles the callback from the Google OAuth flow. Automatically links accounts or creates a new one. Sets the refresh token cookie and redirects the browser back to the React SPA with the access token embedded.',
   })
   @ApiResponse({
-    status: 200,
-    description: 'Authentication successful',
-    schema: {
-      example: {
-        message: 'Authentication successful',
-        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-      },
-    },
+    status: 302,
+    description: 'Authentication successful. Redirects to frontend.',
   })
   @ApiResponse({ status: 401, description: 'Unauthorized: No email found from OAuth provider' })
   async googleAuthCallback(
     @GetCurrentUser() user: User,
     @Res({ passthrough: true }) res: Response,
-  ): Promise<{ message: string; accessToken: string }> {
-    return this.handleOAuthCallback(user, res);
+  ): Promise<{ url: string }> {
+    // Handle tokens via service, which returns { url: frontendUrl/success... }
+    return this.authService.handleOAuthCallback(user, res);
   }
 
   @Post('logout')
@@ -186,22 +183,12 @@ export class AuthController {
 
   // ── Private Helpers ───────────────────────────────────────
 
-  private async handleOAuthCallback(user: User, res: Response): Promise<{ message: string; accessToken: string }> {
-    const { refreshToken, ...responseInfo } = await this.authService.getTokens(user.id, user.email);
-    await this.authService.updateRefreshTokenHash(user.id, refreshToken);
-    this.setRefreshTokenCookie(res, refreshToken);
-    return {
-      message: 'Authentication successful',
-      accessToken: responseInfo.accessToken,
-    };
-  }
-
   private setRefreshTokenCookie(res: Response, refreshToken: string): void {
     res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN, refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
   }
 }
