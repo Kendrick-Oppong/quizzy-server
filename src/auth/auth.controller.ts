@@ -17,7 +17,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import type { Response } from 'express';
-import type { User } from 'generated/prisma';
+import type { User } from 'generated/prisma/client';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto';
 import { GetCurrentUser, GetCurrentUserId, Public } from './decorators';

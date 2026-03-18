@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { Profile, Strategy, StrategyOptions, VerifyCallback } from 'passport-google-oauth20';
 import { AuthService } from '../auth.service';
-import { AuthProvider } from 'generated/prisma';
+import { AuthProvider } from 'generated/prisma/client';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {

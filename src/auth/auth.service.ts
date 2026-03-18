@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { Profile } from 'passport-google-oauth20';
 import { UsersService } from '../users/users.service';
 import type { Tokens, JwtPayload } from 'types/auth';
-import type { AuthProvider, User } from 'generated/prisma';
+import type { AuthProvider, User } from 'generated/prisma/client';
 import type { RegisterDto } from './dto';
 import { AUTH_CONSTANTS } from '../lib/constants/auth';
 
@@ -35,13 +35,9 @@ export class AuthService {
       AUTH_CONSTANTS.SALT_ROUNDS,
     );
 
-    const names = dto.fullName.trim().split(' ');
-    const firstName = names[0];
-    const lastName = names.slice(1).join(' ');
-
     const user = await this.usersService.create({
-      firstName,
-      lastName,
+      firstName: dto.firstName.trim(),
+      lastName: dto.lastName.trim(),
       email: dto.email,
       password: hashedPassword,
       role: dto.role,
