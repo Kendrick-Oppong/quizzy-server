@@ -35,7 +35,8 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
-    description: 'Creates a new user account with role selection. Sets an HttpOnly cookie with the refresh token and returns the access token.',
+    description:
+      'Creates a new user account with role selection. Sets an HttpOnly cookie with the refresh token and returns the access token.',
   })
   @ApiBody({ type: RegisterDto })
   @ApiResponse({
@@ -48,14 +49,21 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 400, description: 'Validation failed (e.g., weak password, invalid email)' })
-  @ApiResponse({ status: 409, description: 'Conflict: An account with this email already exists' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation failed (e.g., weak password, invalid email)',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict: An account with this email already exists',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string; accessToken: string }> {
-    const { refreshToken, ...responseInfo } = await this.authService.register(dto);
+    const { refreshToken, ...responseInfo } =
+      await this.authService.register(dto);
     this.setRefreshTokenCookie(res, refreshToken);
     return responseInfo;
   }
@@ -65,7 +73,8 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login with email and password',
-    description: 'Authenticates a user. Features brute-force protection (locks account for 15 minutes after 5 failed attempts). Sets an HttpOnly cookie with the refresh token.',
+    description:
+      'Authenticates a user. Features brute-force protection (locks account for 15 minutes after 5 failed attempts). Sets an HttpOnly cookie with the refresh token.',
   })
   @ApiBody({ type: LoginDto })
   @ApiResponse({
@@ -79,14 +88,24 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 400, description: 'Validation failed' })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Invalid email or password' })
-  @ApiResponse({ status: 403, description: 'Forbidden: Account is temporarily locked due to brute-force protection' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Invalid email or password',
+  })
+  @ApiResponse({
+    status: 403,
+    description:
+      'Forbidden: Account is temporarily locked due to brute-force protection',
+  })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string; accessToken: string }> {
-    const { refreshToken, ...responseInfo } = await this.authService.login(dto.email, dto.password);
+    const { refreshToken, ...responseInfo } = await this.authService.login(
+      dto.email,
+      dto.password,
+    );
     this.setRefreshTokenCookie(res, refreshToken);
     return responseInfo;
   }
@@ -96,9 +115,13 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({
     summary: 'Initiate Google OAuth Flow',
-    description: 'Redirects the user to the Google consent screen. This endpoint does not return a JSON response directly.',
+    description:
+      'Redirects the user to the Google consent screen. This endpoint does not return a JSON response directly.',
   })
-  @ApiResponse({ status: 302, description: 'Redirect to Google OAuth consent screen' })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirect to Google OAuth consent screen',
+  })
   googleAuth(): void {
     // Guard redirects to Google — no body needed
   }
@@ -109,13 +132,17 @@ export class AuthController {
   @Redirect()
   @ApiOperation({
     summary: 'Google OAuth Callback',
-    description: 'Handles the callback from the Google OAuth flow. Automatically links accounts or creates a new one. Sets the refresh token cookie and redirects the browser back to the React SPA with the access token embedded.',
+    description:
+      'Handles the callback from the Google OAuth flow. Automatically links accounts or creates a new one. Sets the refresh token cookie and redirects the browser back to the React SPA with the access token embedded.',
   })
   @ApiResponse({
     status: 302,
     description: 'Authentication successful. Redirects to frontend.',
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized: No email found from OAuth provider' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: No email found from OAuth provider',
+  })
   async googleAuthCallback(
     @GetCurrentUser() user: User,
     @Res({ passthrough: true }) res: Response,
@@ -129,7 +156,8 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Logout user',
-    description: 'Clears the refresh token from the database and clears the HttpOnly cookie.',
+    description:
+      'Clears the refresh token from the database and clears the HttpOnly cookie.',
   })
   @ApiResponse({
     status: 200,
@@ -140,7 +168,10 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Missing or invalid access token' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Missing or invalid access token',
+  })
   async logout(
     @GetCurrentUserId() userId: string,
     @Res({ passthrough: true }) res: Response,
@@ -157,7 +188,8 @@ export class AuthController {
   @ApiCookieAuth('refresh_token')
   @ApiOperation({
     summary: 'Refresh access tokens',
-    description: 'Generates a new access token and refresh token using a valid refresh token from the HttpOnly cookie.',
+    description:
+      'Generates a new access token and refresh token using a valid refresh token from the HttpOnly cookie.',
   })
   @ApiResponse({
     status: 200,
@@ -169,14 +201,21 @@ export class AuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized: Refresh token missing or session expired' })
-  @ApiResponse({ status: 403, description: 'Forbidden: Invalid refresh token signature or mismatch' })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized: Refresh token missing or session expired',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden: Invalid refresh token signature or mismatch',
+  })
   async refreshTokens(
     @GetCurrentUserId() userId: string,
     @GetCurrentUser('refreshToken') currentRefreshToken: string,
     @Res({ passthrough: true }) res: Response,
   ): Promise<{ message: string; accessToken: string }> {
-    const { refreshToken, ...responseInfo } = await this.authService.refreshTokens(userId, currentRefreshToken);
+    const { refreshToken, ...responseInfo } =
+      await this.authService.refreshTokens(userId, currentRefreshToken);
     this.setRefreshTokenCookie(res, refreshToken);
     return responseInfo;
   }
