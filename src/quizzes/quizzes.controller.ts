@@ -7,4 +7,3 @@ export class QuizzesController {
     return { message: 'Quizzes API placeholder' };
   }
 }
-

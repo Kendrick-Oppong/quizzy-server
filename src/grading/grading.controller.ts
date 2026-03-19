@@ -7,4 +7,3 @@ export class GradingController {
     return { message: 'Grading API placeholder' };
   }
 }
-

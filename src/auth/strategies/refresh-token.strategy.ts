@@ -7,12 +7,17 @@ import type { JwtPayload, JwtPayloadWithRt } from 'types/auth';
 import { AUTH_CONSTANTS } from '../../lib/constants/auth';
 
 @Injectable()
-export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class RefreshTokenStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(config: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request): string | null => {
-          const token = request?.cookies?.[AUTH_CONSTANTS.REFRESH_TOKEN] as string | undefined;
+          const token = request?.cookies?.[AUTH_CONSTANTS.REFRESH_TOKEN] as
+            | string
+            | undefined;
           return token ?? null;
         },
       ]),
@@ -22,7 +27,9 @@ export class RefreshTokenStrategy extends PassportStrategy(Strategy, 'jwt-refres
   }
 
   validate(req: Request, payload: JwtPayload): JwtPayloadWithRt {
-    const refreshToken = req?.cookies?.[AUTH_CONSTANTS.REFRESH_TOKEN] as string | undefined;
+    const refreshToken = req?.cookies?.[AUTH_CONSTANTS.REFRESH_TOKEN] as
+      | string
+      | undefined;
     if (!refreshToken) {
       throw new ForbiddenException('Refresh token missing');
     }

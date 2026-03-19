@@ -7,4 +7,3 @@ export class SubjectsController {
     return { message: 'Subjects API placeholder' };
   }
 }
-

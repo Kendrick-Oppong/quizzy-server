@@ -7,7 +7,7 @@ import {
   ApiCookieAuth,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { RegisterDto, LoginDto } from '../dto';
+import { RegisterDto, LoginDto } from '../auth/dto';
 
 export const AuthApiTags = ApiTags('Authentication');
 

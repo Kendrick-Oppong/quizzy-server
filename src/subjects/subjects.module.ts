@@ -8,4 +8,3 @@ import { SubjectsService } from './subjects.service';
   exports: [SubjectsService],
 })
 export class SubjectsModule {}
-

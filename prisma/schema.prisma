@@ -2,14 +2,16 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
   moduleFormat = "cjs"
 }
 
 datasource db {
   provider = "postgresql"
 }
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
 
 enum Role {
   ADMIN
@@ -65,33 +67,32 @@ enum ExtensionRequestStatus {
   EXPIRED
 }
 
+// ─── Models ───────────────────────────────────────────────────────────────────
+
 model User {
-  id                 String       @id @default(uuid())
-  email              String       @unique
-  password           String?
-  firstName          String
-  lastName           String
-  avatarUrl          String?
-  role               Role         @default(STUDENT)
-  provider           AuthProvider @default(LOCAL)
-  providerId         String?      @unique
-  refreshToken       String?
+  id                  String       @id @default(uuid())
+  email               String       @unique
+  password            String?
+  firstName           String
+  lastName            String
+  avatarUrl           String?
+  role                Role         @default(STUDENT)
+  provider            AuthProvider @default(LOCAL)
+  providerId          String?      @unique
+  refreshToken        String?
   failedLoginAttempts Int          @default(0)
-  lockedUntil        DateTime?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
+  lockedUntil         DateTime?
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
-  classesTaught      Class[]             @relation("ClassTeacher")
-  classMemberships  ClassMembership[]  @relation("ClassMembershipStudent")
-  classInvitesSent  ClassInvite[]      @relation("ClassInviteInvitedBy")
-  classInvitesAccepted ClassInvite[]    @relation("ClassInviteAcceptedBy")
-
-  quizzesCreated     Quiz[]             @relation("QuizCreatedBy")
-  quizSubmissions    QuizSubmission[]   @relation("QuizSubmissionStudent")
-
-  gradesIssued       Grade[]            @relation("GradeTeacher")
-
-  quizExtensionRequests QuizExtensionRequest[] @relation("QuizExtensionStudent")
+  classesTaught          Class[]                @relation("ClassTeacher")
+  classMemberships       ClassMembership[]      @relation("ClassMembershipStudent")
+  classInvitesSent       ClassInvite[]          @relation("ClassInviteInvitedBy")
+  classInvitesAccepted   ClassInvite[]          @relation("ClassInviteAcceptedBy")
+  quizzesCreated         Quiz[]                 @relation("QuizCreatedBy")
+  quizSubmissions        QuizSubmission[]       @relation("QuizSubmissionStudent")
+  gradesIssued           Grade[]                @relation("GradeTeacher")
+  quizExtensionRequests  QuizExtensionRequest[] @relation("QuizExtensionStudent")
   quizExtensionDecisions QuizExtensionRequest[] @relation("QuizExtensionTeacher")
 
   @@map("users")
@@ -105,30 +106,31 @@ model Subject {
   updatedAt DateTime @updatedAt
 
   classes Class[]
+
+  @@map("subjects")
 }
 
 model Class {
-  id          String      @id @default(uuid())
-  name        String
-  classCode   String     @unique
+  id        String @id @default(uuid())
+  name      String
+  classCode String @unique
 
-  subjectId   String?
-  subject     Subject?   @relation(fields: [subjectId], references: [id])
+  subjectId String?
+  subject   Subject? @relation(fields: [subjectId], references: [id])
 
   // Display-only grouping shown in the UI (e.g. STEM, Elective)
-  category    String?
-  levelLabel  String?
+  category   String?
+  levelLabel String?
 
-  joinCode    String?    @unique
-
-  status      ClassStatus @default(ACTIVE)
+  joinCode String?     @unique
+  status   ClassStatus @default(ACTIVE)
 
   // Teacher who manages the class
-  teacherId   String
-  teacher     User        @relation("ClassTeacher", fields: [teacherId], references: [id])
+  teacherId String
+  teacher   User   @relation("ClassTeacher", fields: [teacherId], references: [id])
 
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   memberships ClassMembership[]
   invites     ClassInvite[]
@@ -136,151 +138,152 @@ model Class {
 
   @@index([teacherId])
   @@index([subjectId])
+  @@map("classes")
 }
 
 model ClassMembership {
   id        String   @id @default(uuid())
-
   classId   String
   studentId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  class   Class @relation(fields: [classId], references: [id], onDelete: Cascade)
+  student User  @relation("ClassMembershipStudent", fields: [studentId], references: [id])
+
+  @@unique([classId, studentId])
+  @@index([studentId])
+  @@index([classId]) // used by raw SQL join in teacherOverview activeStudents count
+  @@map("class_memberships")
+}
+
+model ClassInvite {
+  id String @id @default(uuid())
+
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  invitedById String
+  invitedBy   User   @relation("ClassInviteInvitedBy", fields: [invitedById], references: [id])
+
+  // Optional: UI can invite by link/code instead of email
+  email String?
+
+  inviteCode String                 @unique
+  status     ExtensionRequestStatus @default(PENDING)
+
+  expiresAt    DateTime?
+  acceptedAt   DateTime?
+  acceptedById String?
+  acceptedBy   User?     @relation("ClassInviteAcceptedBy", fields: [acceptedById], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  class     Class    @relation(fields: [classId], references: [id], onDelete: Cascade)
-  student   User     @relation("ClassMembershipStudent", fields: [studentId], references: [id])
-
-  @@unique([classId, studentId])
-  @@index([studentId])
-}
-
-model ClassInvite {
-  id            String @id @default(uuid())
-  classId       String
-  class         Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
-
-  invitedById   String
-  invitedBy     User   @relation("ClassInviteInvitedBy", fields: [invitedById], references: [id])
-
-  // Optional email (UI can invite by link/code)
-  email         String?
-
-  inviteCode    String  @unique
-  status        ExtensionRequestStatus @default(PENDING)
-
-  expiresAt     DateTime?
-  acceptedAt    DateTime?
-  acceptedById  String?
-  acceptedBy    User?   @relation("ClassInviteAcceptedBy", fields: [acceptedById], references: [id])
-
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
   @@index([classId])
   @@index([invitedById])
+  @@map("class_invites")
 }
 
 model Quiz {
-  id        String    @id @default(uuid())
+  id String @id @default(uuid())
 
-  classId   String
-  class     Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  classId String
+  class   Class  @relation(fields: [classId], references: [id], onDelete: Cascade)
 
-  title     String
-  description String?
-
-  status    QuizStatus @default(DRAFT)
-
-  dueAt     DateTime?
-  scheduledAt DateTime?
-  durationMinutes Int  @default(0)
+  title           String
+  description     String?
+  status          QuizStatus @default(DRAFT)
+  dueAt           DateTime?
+  scheduledAt     DateTime?
+  durationMinutes Int        @default(0)
 
   // Teacher who created/manages the quiz
   createdById String
   createdBy   User   @relation("QuizCreatedBy", fields: [createdById], references: [id])
 
   publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  questions  QuizQuestion[]
-  submissions QuizSubmission[]
+  questions         QuizQuestion[]
+  submissions       QuizSubmission[]
   extensionRequests QuizExtensionRequest[]
 
   @@index([classId])
   @@index([createdById])
   @@index([dueAt])
+  @@index([classId, status, dueAt]) // covers upcoming + pending quiz queries (WHERE + ORDER BY)
+  @@index([createdById, status]) // teacher quiz count by status
+  @@map("quizzes")
 }
 
 model QuizQuestion {
-  id            String @id @default(uuid())
+  id String @id @default(uuid())
 
-  quizId       String
-  quiz         Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   orderIndex   Int
   questionText String
-
   questionType QuestionType
-  points       Int @default(1)
+  points       Int          @default(1)
 
   // For MCQ/True-False: teacher selects exactly one correct option.
-  // Stored on the question so the database enforces “one correct” cleanly.
-  correctOptionId String? @unique
+  correctOptionId String?     @unique
   correctOption   QuizOption? @relation("QuizQuestionCorrectOption", fields: [correctOptionId], references: [id])
 
-  // For short-answer questions, teacher stores the expected answer for reporting.
+  // For short-answer questions
   correctAnswerText String?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  options      QuizOption[]
-  answers      QuizAnswer[]
-  gradeItems   GradeItem[]
+  options    QuizOption[]
+  answers    QuizAnswer[]
+  gradeItems GradeItem[]
 
   @@unique([quizId, orderIndex])
   @@index([quizId])
+  @@map("quiz_questions")
 }
 
 model QuizOption {
-  id          String @id @default(uuid())
+  id String @id @default(uuid())
 
-  questionId  String
-  question    QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  orderIndex  Int
-  text        String
+  orderIndex Int
+  text       String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  correctFor  QuizQuestion? @relation("QuizQuestionCorrectOption")
+  correctFor      QuizQuestion? @relation("QuizQuestionCorrectOption")
   selectedAnswers QuizAnswer[]
 
   @@unique([questionId, orderIndex])
   @@index([questionId])
+  @@map("quiz_options")
 }
 
 model QuizSubmission {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
-  quizId    String
-  quiz      Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  quizId String
+  quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   studentId String
   student   User   @relation("QuizSubmissionStudent", fields: [studentId], references: [id])
 
-  status    SubmissionStatus @default(IN_PROGRESS)
-  attemptNumber Int          @default(1)
+  status        SubmissionStatus @default(IN_PROGRESS)
+  attemptNumber Int              @default(1)
 
-  startedAt DateTime @default(now())
+  startedAt   DateTime  @default(now())
   submittedAt DateTime?
   gradedAt    DateTime?
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   answers    QuizAnswer[]
   grade      Grade?
@@ -289,6 +292,9 @@ model QuizSubmission {
   @@unique([quizId, studentId, attemptNumber])
   @@index([quizId])
   @@index([studentId])
+  @@index([studentId, status]) // student completed-count query (WHERE studentId + status IN [...])
+  @@index([quizId, studentId]) // submission existence checks (submissions: { none: { studentId } })
+  @@map("quiz_submissions")
 }
 
 model QuizAnswer {
@@ -297,10 +303,10 @@ model QuizAnswer {
   submissionId String
   submission   QuizSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
-  questionId   String
-  question     QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  questionId String
+  question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  // For MCQ/True-False
+  // For MCQ / True-False
   selectedOptionId String?
   selectedOption   QuizOption? @relation(fields: [selectedOptionId], references: [id])
 
@@ -315,31 +321,32 @@ model QuizAnswer {
   @@unique([submissionId, questionId])
   @@index([questionId])
   @@index([submissionId])
+  @@map("quiz_answers")
 }
 
 model Grade {
   id String @id @default(uuid())
 
-  submissionId String @unique
+  submissionId String         @unique
   submission   QuizSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
 
   teacherId String
   teacher   User   @relation("GradeTeacher", fields: [teacherId], references: [id])
 
-  status GradeStatus @default(DRAFT)
-
-  overallScore Int?
-  maxScore     Int?
+  status          GradeStatus @default(DRAFT)
+  overallScore    Int?
+  maxScore        Int?
   overallFeedback String?
-
-  publishedAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  publishedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   items GradeItem[]
 
   @@index([teacherId])
+  @@index([status, createdAt]) // weekly trend date-range scans (WHERE status + createdAt >= ?)
+  @@index([status, submissionId]) // grade lookups filtered by status then submission join
+  @@map("grades")
 }
 
 model GradeItem {
@@ -351,17 +358,15 @@ model GradeItem {
   questionId String
   question   QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
-  // Mirrors the UI score breakdown (Correct/Incorrect/Partial)
-  status GradeItemStatus
-
-  score Int?
+  // Mirrors the UI score breakdown
+  status   GradeItemStatus
+  score    Int?
   maxScore Int?
-
   feedback String?
 
   orderIndex Int @default(0)
 
-  // Link to the student's answer record (useful for “show your answer / correct answer”)
+  // Link to the student's answer record
   quizAnswerId String?
   quizAnswer   QuizAnswer? @relation(fields: [quizAnswerId], references: [id])
 
@@ -370,6 +375,7 @@ model GradeItem {
 
   @@unique([gradeId, questionId])
   @@index([questionId])
+  @@map("grade_items")
 }
 
 model QuizExtensionRequest {
@@ -379,26 +385,24 @@ model QuizExtensionRequest {
   quiz   Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
 
   studentId String
-  student   User @relation("QuizExtensionStudent", fields: [studentId], references: [id])
+  student   User   @relation("QuizExtensionStudent", fields: [studentId], references: [id])
 
-  // Teacher who decides (nullable until decided)
+  // Nullable until teacher decides
   teacherId String?
-  teacher   User? @relation("QuizExtensionTeacher", fields: [teacherId], references: [id])
+  teacher   User?   @relation("QuizExtensionTeacher", fields: [teacherId], references: [id])
 
-  status ExtensionRequestStatus @default(PENDING)
-
-  message String?
-  requestedAt DateTime @default(now())
-
-  decidedAt DateTime?
-  newDueAt DateTime?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  status      ExtensionRequestStatus @default(PENDING)
+  message     String?
+  requestedAt DateTime               @default(now())
+  decidedAt   DateTime?
+  newDueAt    DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
 
   createdBySubmissionId String?
   createdBySubmission   QuizSubmission? @relation(fields: [createdBySubmissionId], references: [id])
 
   @@index([quizId])
   @@index([studentId])
+  @@map("quiz_extension_requests")
 }

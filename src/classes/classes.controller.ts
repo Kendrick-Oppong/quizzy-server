@@ -7,4 +7,3 @@ export class ClassesController {
     return { message: 'Classes API placeholder' };
   }
 }
-

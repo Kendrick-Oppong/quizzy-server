@@ -22,7 +22,10 @@ export class UsersService {
     return this.prisma.user.update({ where: { id }, data });
   }
 
-  async findOneByProvider(provider: AuthProvider, providerId: string): Promise<User | null> {
+  async findOneByProvider(
+    provider: AuthProvider,
+    providerId: string,
+  ): Promise<User | null> {
     return this.prisma.user.findUnique({
       where: { providerId },
     });

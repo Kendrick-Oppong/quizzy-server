@@ -11,6 +11,7 @@ import { QuizzesModule } from './quizzes/quizzes.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { UsersModule } from './users/users.module';
 import { StudentsModule } from './students/students.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { StudentsModule } from './students/students.module';
     QuizzesModule,
     GradingModule,
     StudentsModule,
+    DashboardModule,
   ],
   providers: [
     {

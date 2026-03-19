@@ -7,4 +7,3 @@ export class StudentsController {
     return { message: 'Students API placeholder' };
   }
 }
-

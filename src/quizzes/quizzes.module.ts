@@ -8,4 +8,3 @@ import { QuizzesService } from './quizzes.service';
   exports: [QuizzesService],
 })
 export class QuizzesModule {}
-

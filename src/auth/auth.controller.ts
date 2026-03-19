@@ -24,7 +24,7 @@ import {
   GoogleCallbackDocs,
   LogoutDocs,
   RefreshDocs,
-} from './swagger/auth.docs';
+} from '../swagger/auth.docs';
 
 @AuthApiTags
 @Controller('auth')
