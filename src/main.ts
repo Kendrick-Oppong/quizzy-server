@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
+import { AUTH_CONSTANTS } from './lib/constants/auth';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -37,7 +38,7 @@ async function bootstrap() {
     )
     .setVersion('1.0')
     .addBearerAuth()
-    .addCookieAuth('refresh_token')
+    .addCookieAuth(AUTH_CONSTANTS.REFRESH_TOKEN)
     .addServer(
       backendUrl,
       process.env.BACKEND_URL ? 'Production server' : 'Local server',
