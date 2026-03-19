@@ -27,40 +27,22 @@ async function bootstrap() {
 
   const port = process.env.PORT ?? '3000';
   const defaultHost = `http://localhost:${port}`;
-  const swaggerServers = [] as { url: string; description?: string }[];
+  const backendUrl = process.env.BACKEND_URL ?? defaultHost;
+  const baseUrl = `${backendUrl}/api`;
 
-  if (process.env.SWAGGER_BASE_URL) {
-    swaggerServers.push({
-      url: process.env.SWAGGER_BASE_URL,
-      description: 'Configured base URL',
-    });
-  } else if (process.env.CORS_ORIGINS) {
-    const origins = process.env.CORS_ORIGINS.split(',')
-      .map((o) => o.trim())
-      .filter(Boolean);
-    origins.forEach((origin, i) =>
-      swaggerServers.push({ url: origin, description: `CORS origin ${i + 1}` }),
-    );
-  } else {
-    swaggerServers.push({ url: defaultHost, description: 'Local server' });
-  }
-
-  const baseUrl = `${swaggerServers[0].url}/api`;
-
-  const configBuilder = new DocumentBuilder()
+  const config = new DocumentBuilder()
     .setTitle('Quizzy API')
     .setDescription(
       `The Quizzy Application API documentation\n\n**Base URL:** \`${baseUrl}\``,
     )
     .setVersion('1.0')
     .addBearerAuth()
-    .addCookieAuth('refresh_token');
-
-  swaggerServers.forEach(({ url, description }) =>
-    configBuilder.addServer(url, description),
-  );
-
-  const config = configBuilder.build();
+    .addCookieAuth('refresh_token')
+    .addServer(
+      backendUrl,
+      process.env.BACKEND_URL ? 'Production server' : 'Local server',
+    )
+    .build();
 
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document, {
