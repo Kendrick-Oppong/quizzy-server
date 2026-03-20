@@ -29,12 +29,10 @@ export function TeacherOverviewDocs() {
           performanceTrend: [
             { day: 'Mon', value: 20 },
             { day: 'Tue', value: 35 },
-            // ...
           ],
           scoreDistribution: [
             { range: '<60', count: 10 },
             { range: '60s', count: 20 },
-            // ...
           ],
           recentActivity: [
             {
@@ -73,10 +71,7 @@ export function StudentOverviewDocs() {
             quizzesCompleted: 14,
             pendingQuizzes: 2,
           },
-          weeklyPerformance: [
-            { day: 'Mon', score: 85 },
-            // ...
-          ],
+          weeklyPerformance: [{ day: 'Mon', score: 85 }],
           upcomingQuizzes: [
             {
               id: 'quiz-id-1',
